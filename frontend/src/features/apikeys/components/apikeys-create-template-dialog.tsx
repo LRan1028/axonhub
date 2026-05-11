@@ -58,6 +58,8 @@ export function ApiKeyCreateTemplateDialog({ open, onOpenChange }: ApiKeyCreateT
         channelTagsMatchMode: 'any' as const,
         modelIDs: [] as string[],
         loadBalanceStrategy: null as string | null,
+        modelAssociations: [],
+        storagePolicy: null,
         quota: null as FormValues['profile']['quota'],
       },
     }),

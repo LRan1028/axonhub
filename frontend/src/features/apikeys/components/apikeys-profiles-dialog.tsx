@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { TagsAutocompleteInput } from '@/components/ui/tags-autocomplete-input';
+import { Textarea } from '@/components/ui/textarea';
 import { AutoComplete } from '@/components/auto-complete';
 import { useAllChannelSummarys } from '@/features/channels/data/channels';
 import { useSelectedProjectId } from '@/stores/projectStore';
@@ -258,6 +259,8 @@ export function ApiKeyProfilesDialog({ open, onOpenChange, onSubmit, loading = f
       channelTagsMatchMode: 'any',
       modelIDs: [],
       loadBalanceStrategy: null,
+      modelAssociations: [],
+      storagePolicy: null,
     });
   }, [appendProfile, profileFields]);
 
@@ -507,12 +510,18 @@ function ProfileCard({
   const currentQuota = form.watch(`profiles.${profileIndex}.quota`);
   const quotaUsagePeriod = (currentQuota?.period ?? quotaUsage?.quota?.period) as ApiKeyQuotaPeriod | null | undefined;
   const quotaUsageEnd = quotaUsage?.window.end ?? (quotaUsagePeriod?.type !== 'calendar_duration' ? new Date() : null);
+  const modelAssociationsValue = form.watch(`profiles.${profileIndex}.modelAssociations`);
+  const [modelAssociationsText, setModelAssociationsText] = useState('[]');
 
   // Initialize local state from form value
   useEffect(() => {
     const currentName = form.getValues(`profiles.${profileIndex}.name`);
     setLocalProfileName(currentName || '');
   }, [form, profileIndex]);
+
+  useEffect(() => {
+    setModelAssociationsText(JSON.stringify(modelAssociationsValue ?? [], null, 2));
+  }, [modelAssociationsValue]);
 
   // Immediate duplicate check (no debounce for error display)
   const checkDuplicate = useCallback(
@@ -904,6 +913,144 @@ function ProfileCard({
                       </Select>
                     </FormControl>
                   </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Storage Policy */}
+          <div className='space-y-4 border-t pt-6'>
+            <div className='flex items-center justify-between gap-3'>
+              <div>
+                <h4 className='text-sm font-medium'>{t('apikeys.profiles.storagePolicy')}</h4>
+                <p className='text-muted-foreground mt-1 text-xs'>{t('apikeys.profiles.storagePolicyDescription')}</p>
+              </div>
+              <FormField
+                control={form.control}
+                name={`profiles.${profileIndex}.storagePolicy`}
+                render={({ field }) => (
+                  <FormItem className='flex items-center space-y-0 gap-x-2'>
+                    <FormLabel className='text-sm'>{t('apikeys.profiles.overrideGlobal')}</FormLabel>
+                    <FormControl>
+                      <Switch
+                        checked={field.value != null}
+                        onCheckedChange={(checked) => {
+                          field.onChange(
+                            checked
+                              ? {
+                                  dataStorageId: null,
+                                  storeChunks: null,
+                                  livePreview: null,
+                                  storeRequestBody: null,
+                                  storeResponseBody: null,
+                                }
+                              : null
+                          );
+                        }}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {form.watch(`profiles.${profileIndex}.storagePolicy`) != null && (
+              <div className='grid gap-4 md:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name={`profiles.${profileIndex}.storagePolicy.dataStorageId`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('apikeys.profiles.dataStorageId')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          type='number'
+                          min={1}
+                          value={(field.value as unknown as number | null | undefined) ?? ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            field.onChange(value === '' ? null : Number(value));
+                          }}
+                          placeholder={t('apikeys.profiles.inheritGlobal')}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {(['storeRequestBody', 'storeResponseBody', 'storeChunks', 'livePreview'] as const).map((key) => (
+                  <FormField
+                    key={key}
+                    control={form.control}
+                    name={`profiles.${profileIndex}.storagePolicy.${key}`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t(`apikeys.profiles.${key}`)}</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={field.value == null ? 'inherit' : field.value ? 'true' : 'false'}
+                            onValueChange={(value) => field.onChange(value === 'inherit' ? null : value === 'true')}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='inherit'>{t('apikeys.profiles.inheritGlobal')}</SelectItem>
+                              <SelectItem value='true'>{t('apikeys.status.enabled')}</SelectItem>
+                              <SelectItem value='false'>{t('apikeys.status.disabled')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Model Channel Policies */}
+          <div className='space-y-3 border-t pt-6'>
+            <div>
+              <h4 className='text-sm font-medium'>{t('apikeys.profiles.modelAssociations')}</h4>
+              <p className='text-muted-foreground mt-1 text-xs'>{t('apikeys.profiles.modelAssociationsDescription')}</p>
+            </div>
+            <FormField
+              control={form.control}
+              name={`profiles.${profileIndex}.modelAssociations`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea
+                      rows={6}
+                      value={modelAssociationsText}
+                      onChange={(e) => {
+                        const nextText = e.target.value;
+                        setModelAssociationsText(nextText);
+
+                        const value = nextText.trim();
+                        if (value === '') {
+                          field.onChange([]);
+                          form.clearErrors(`profiles.${profileIndex}.modelAssociations`);
+                          return;
+                        }
+
+                        try {
+                          field.onChange(JSON.parse(value));
+                          form.clearErrors(`profiles.${profileIndex}.modelAssociations`);
+                        } catch {
+                          form.setError(`profiles.${profileIndex}.modelAssociations`, {
+                            type: 'manual',
+                            message: t('apikeys.validation.invalidJSON'),
+                          });
+                        }
+                      }}
+                      placeholder='[{"modelId":"gpt-4o","associations":[]}]'
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

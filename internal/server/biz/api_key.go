@@ -25,6 +25,7 @@ import (
 	"github.com/looplj/axonhub/internal/pkg/xcache"
 	"github.com/looplj/axonhub/internal/pkg/xcache/live"
 	"github.com/looplj/axonhub/internal/pkg/xerrors"
+	"github.com/looplj/axonhub/internal/pkg/xregexp"
 	"github.com/looplj/axonhub/internal/scopes"
 )
 
@@ -220,6 +221,10 @@ func (s *APIKeyService) CreateAPIKey(ctx context.Context, input ent.CreateAPIKey
 	}
 
 	client := s.entFromContext(ctx)
+	input.Name = strings.TrimSpace(input.Name)
+	if input.Name == "" {
+		return nil, ErrAPIKeyNameRequired
+	}
 
 	// Check for duplicate API key name in the same project
 	exists, err := client.APIKey.Query().
@@ -296,6 +301,13 @@ func (s *APIKeyService) UpdateAPIKey(ctx context.Context, id int, input ent.Upda
 
 	if apiKey.Type == apikey.TypeNoauth {
 		return nil, fmt.Errorf("noauth type API key cannot be updated")
+	}
+
+	if input.Name != nil {
+		*input.Name = strings.TrimSpace(*input.Name)
+		if *input.Name == "" {
+			return nil, ErrAPIKeyNameRequired
+		}
 	}
 
 	// Check for duplicate name if name is being updated
@@ -381,22 +393,7 @@ func (s *APIKeyService) UpdateAPIKeyProfiles(ctx context.Context, id int, profil
 		return nil, fmt.Errorf("noauth type API key profiles cannot be updated")
 	}
 
-	// Validate that profile names are unique (case-insensitive)
-	if err := validateProfileNames(profiles.Profiles); err != nil {
-		return nil, err
-	}
-
-	// Validate that active profile exists in the profiles list
-	if err := validateActiveProfile(profiles.ActiveProfile, profiles.Profiles); err != nil {
-		return nil, err
-	}
-
-	if err := validateProfileFilters(profiles.Profiles); err != nil {
-		return nil, err
-	}
-
-	// Validate quota configuration (if present)
-	if err := validateProfileQuota(profiles.Profiles); err != nil {
+	if err := validateAPIKeyProfiles(profiles); err != nil {
 		return nil, err
 	}
 
@@ -411,6 +408,32 @@ func (s *APIKeyService) UpdateAPIKeyProfiles(ctx context.Context, id int, profil
 	s.invalidateAPIKeyCaches(ctx, apiKey.Key)
 
 	return apiKey, nil
+}
+
+func validateAPIKeyProfiles(profiles objects.APIKeyProfiles) error {
+	// Validate that profile names are unique (case-insensitive)
+	if err := validateProfileNames(profiles.Profiles); err != nil {
+		return err
+	}
+
+	// Validate that active profile exists in the profiles list
+	if err := validateActiveProfile(profiles.ActiveProfile, profiles.Profiles); err != nil {
+		return err
+	}
+
+	if err := validateProfileFilters(profiles.Profiles); err != nil {
+		return err
+	}
+
+	if err := validateProfileModelAssociations(profiles.Profiles); err != nil {
+		return err
+	}
+
+	if err := validateProfileStoragePolicy(profiles.Profiles); err != nil {
+		return err
+	}
+
+	return validateProfileQuota(profiles.Profiles)
 }
 
 // validateProfileNames checks that all profile names are unique (case-insensitive).
@@ -448,6 +471,67 @@ func validateProfileFilters(profiles []objects.APIKeyProfile) error {
 	for _, profile := range profiles {
 		if !profile.ChannelTagsMatchMode.IsValid() {
 			return fmt.Errorf("profile '%s' channelTagsMatchMode is invalid", profile.Name)
+		}
+	}
+
+	return nil
+}
+
+func validateProfileModelAssociations(profiles []objects.APIKeyProfile) error {
+	for _, profile := range profiles {
+		seen := make(map[string]struct{}, len(profile.ModelAssociations))
+		for _, policy := range profile.ModelAssociations {
+			modelID := strings.TrimSpace(policy.ModelID)
+			if modelID == "" {
+				return fmt.Errorf("profile '%s' modelAssociations.modelId cannot be empty", profile.Name)
+			}
+
+			if _, ok := seen[modelID]; ok {
+				return fmt.Errorf("profile '%s' duplicate model association policy: %s", profile.Name, modelID)
+			}
+			seen[modelID] = struct{}{}
+
+			if len(policy.Associations) == 0 {
+				return fmt.Errorf("profile '%s' modelAssociations for '%s' must set at least one association", profile.Name, modelID)
+			}
+
+			for _, assoc := range policy.Associations {
+				if assoc == nil {
+					return fmt.Errorf("profile '%s' modelAssociations for '%s' contains empty association", profile.Name, modelID)
+				}
+
+				if assoc.ChannelRegex != nil && assoc.ChannelRegex.Pattern != "" {
+					if err := xregexp.ValidateRegex(assoc.ChannelRegex.Pattern); err != nil {
+						return fmt.Errorf("profile '%s' modelAssociations for '%s' has invalid channel_regex pattern: %w", profile.Name, modelID, err)
+					}
+				}
+
+				if assoc.Regex != nil && assoc.Regex.Pattern != "" {
+					if err := xregexp.ValidateRegex(assoc.Regex.Pattern); err != nil {
+						return fmt.Errorf("profile '%s' modelAssociations for '%s' has invalid regex pattern: %w", profile.Name, modelID, err)
+					}
+				}
+
+				if assoc.ChannelTagsRegex != nil && assoc.ChannelTagsRegex.Pattern != "" {
+					if err := xregexp.ValidateRegex(assoc.ChannelTagsRegex.Pattern); err != nil {
+						return fmt.Errorf("profile '%s' modelAssociations for '%s' has invalid channel_tags_regex pattern: %w", profile.Name, modelID, err)
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateProfileStoragePolicy(profiles []objects.APIKeyProfile) error {
+	for _, profile := range profiles {
+		if profile.StoragePolicy == nil || profile.StoragePolicy.DataStorageID == nil {
+			continue
+		}
+
+		if *profile.StoragePolicy.DataStorageID <= 0 {
+			return fmt.Errorf("profile '%s' storagePolicy.dataStorageId must be positive", profile.Name)
 		}
 	}
 

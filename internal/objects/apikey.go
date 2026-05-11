@@ -12,10 +12,12 @@ type APIKeyProfiles struct {
 }
 
 type APIKeyProfile struct {
-	Name                string         `json:"name"`
-	ModelMappings       []ModelMapping `json:"modelMappings"`
-	Quota               *APIKeyQuota   `json:"quota,omitempty"`
-	LoadBalanceStrategy *string        `json:"loadBalanceStrategy,omitempty"`
+	Name                string                         `json:"name"`
+	ModelMappings       []ModelMapping                 `json:"modelMappings"`
+	Quota               *APIKeyQuota                   `json:"quota,omitempty"`
+	LoadBalanceStrategy *string                        `json:"loadBalanceStrategy,omitempty"`
+	ModelAssociations   []APIKeyModelAssociationPolicy `json:"modelAssociations,omitempty"`
+	StoragePolicy       *APIKeyStoragePolicy           `json:"storagePolicy,omitempty"`
 
 	ChannelIDs           []int                `json:"channelIDs,omitempty"`
 	ChannelTags          []string             `json:"channelTags,omitempty"`
@@ -129,6 +131,15 @@ func (p *APIKeyProfile) Clone() *APIKeyProfile {
 		s := *p.LoadBalanceStrategy
 		cp.LoadBalanceStrategy = &s
 	}
+	if len(p.ModelAssociations) > 0 {
+		cp.ModelAssociations = make([]APIKeyModelAssociationPolicy, len(p.ModelAssociations))
+		for i := range p.ModelAssociations {
+			cp.ModelAssociations[i] = p.ModelAssociations[i].clone()
+		}
+	}
+	if p.StoragePolicy != nil {
+		cp.StoragePolicy = p.StoragePolicy.clone()
+	}
 	return &cp
 }
 
@@ -153,6 +164,72 @@ type APIKeyQuota struct {
 	TotalTokens *int64            `json:"totalTokens,omitempty"`
 	Cost        *decimal.Decimal  `json:"cost,omitempty"`
 	Period      APIKeyQuotaPeriod `json:"period"`
+}
+
+type APIKeyModelAssociationPolicy struct {
+	ModelID      string              `json:"modelId"`
+	Associations []*ModelAssociation `json:"associations"`
+}
+
+func (p APIKeyModelAssociationPolicy) clone() APIKeyModelAssociationPolicy {
+	cp := p
+	if len(p.Associations) > 0 {
+		cp.Associations = make([]*ModelAssociation, len(p.Associations))
+		copy(cp.Associations, p.Associations)
+	}
+	return cp
+}
+
+func (p *APIKeyProfile) ModelAssociationPolicy(modelID string) *APIKeyModelAssociationPolicy {
+	if p == nil || modelID == "" {
+		return nil
+	}
+
+	for i := range p.ModelAssociations {
+		if p.ModelAssociations[i].ModelID == modelID {
+			return &p.ModelAssociations[i]
+		}
+	}
+
+	return nil
+}
+
+type APIKeyStoragePolicy struct {
+	DataStorageID     *int  `json:"dataStorageId,omitempty"`
+	StoreChunks       *bool `json:"storeChunks,omitempty"`
+	LivePreview       *bool `json:"livePreview,omitempty"`
+	StoreRequestBody  *bool `json:"storeRequestBody,omitempty"`
+	StoreResponseBody *bool `json:"storeResponseBody,omitempty"`
+}
+
+func (p *APIKeyStoragePolicy) clone() *APIKeyStoragePolicy {
+	if p == nil {
+		return nil
+	}
+
+	cp := *p
+	if p.DataStorageID != nil {
+		v := *p.DataStorageID
+		cp.DataStorageID = &v
+	}
+	if p.StoreChunks != nil {
+		v := *p.StoreChunks
+		cp.StoreChunks = &v
+	}
+	if p.LivePreview != nil {
+		v := *p.LivePreview
+		cp.LivePreview = &v
+	}
+	if p.StoreRequestBody != nil {
+		v := *p.StoreRequestBody
+		cp.StoreRequestBody = &v
+	}
+	if p.StoreResponseBody != nil {
+		v := *p.StoreResponseBody
+		cp.StoreResponseBody = &v
+	}
+
+	return &cp
 }
 
 type APIKeyQuotaPeriod struct {

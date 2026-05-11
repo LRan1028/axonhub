@@ -64,6 +64,8 @@ export function ApiKeyEditTemplateDialog({ open, onOpenChange, template }: ApiKe
         channelTagsMatchMode: profile?.channelTagsMatchMode ?? 'any',
         modelIDs: profile?.modelIDs ?? null,
         loadBalanceStrategy: profile?.loadBalanceStrategy ?? null,
+        modelAssociations: profile?.modelAssociations ?? [],
+        storagePolicy: profile?.storagePolicy ?? null,
         quota: profile?.quota
           ? {
               requests: profile.quota.requests ?? null,

@@ -45,7 +45,7 @@ func (m *livePreviewMiddleware) OnInboundLlmRequest(ctx context.Context, request
 	}
 
 	if !m.initialized {
-		m.enabled = m.systemService != nil && m.systemService.StoragePolicyOrDefault(ctx).LivePreview
+		m.enabled = m.systemService != nil && biz.EffectiveStoragePolicy(ctx, m.systemService).LivePreview
 		m.initialized = true
 	}
 

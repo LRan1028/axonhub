@@ -80,6 +80,7 @@ func NewChatCompletionOrchestrator(
 		},
 		PipelineFactory:            pipeline.NewFactory(httpClient),
 		ModelMapper:                NewModelMapper(),
+		ModelService:               defaultSelector.ModelService,
 		channelSelector:            defaultSelector,
 		channelLimiterManager:      channelLimiterManager,
 		channelLimiterMetrics:      channelLimiterMetrics,
@@ -101,6 +102,7 @@ type ChatCompletionOrchestrator struct {
 	UsageLogService    *biz.UsageLogService
 	QuotaService       *biz.QuotaService
 	LiveStreamRegistry *biz.LiveStreamRegistry
+	ModelService       *biz.ModelService
 	PromptProvider     PromptProvider
 	PromptProtecter    PromptProtecter
 	Middlewares        []pipeline.Middleware
@@ -197,6 +199,7 @@ func (processor *ChatCompletionOrchestrator) Process(ctx context.Context, reques
 		RequestService:        processor.RequestService,
 		UsageLogService:       processor.UsageLogService,
 		ChannelService:        processor.ChannelService,
+		ModelService:          processor.ModelService,
 		PromptProvider:        processor.PromptProvider,
 		PromptProtecter:       processor.PromptProtecter,
 		RetryPolicyProvider:   processor.SystemService,

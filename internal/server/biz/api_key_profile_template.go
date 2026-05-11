@@ -34,6 +34,12 @@ func (s *APIKeyProfileTemplateService) CreateTemplate(ctx context.Context, input
 
 	if profile != nil {
 		profile.Name = input.Name
+		if err := validateProfileModelAssociations([]objects.APIKeyProfile{*profile}); err != nil {
+			return nil, err
+		}
+		if err := validateProfileStoragePolicy([]objects.APIKeyProfile{*profile}); err != nil {
+			return nil, err
+		}
 	}
 
 	create := client.APIKeyProfileTemplate.Create().
@@ -89,6 +95,12 @@ func (s *APIKeyProfileTemplateService) UpdateTemplate(ctx context.Context, id in
 				profile.Name = *input.Name
 			} else {
 				profile.Name = existing.Name
+			}
+			if err := validateProfileModelAssociations([]objects.APIKeyProfile{*profile}); err != nil {
+				return err
+			}
+			if err := validateProfileStoragePolicy([]objects.APIKeyProfile{*profile}); err != nil {
+				return err
 			}
 			update.SetProfile(profile)
 		}

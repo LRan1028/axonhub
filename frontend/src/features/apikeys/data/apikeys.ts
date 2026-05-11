@@ -22,6 +22,47 @@ import { apiKeyConnectionSchema, apiKeyProfileQuotaUsageSchema, apiKeyProfileTem
 
 const NOAUTH_API_KEY_TYPE = 'noauth';
 
+const APIKEY_PROFILE_POLICY_FIELDS = `
+            modelAssociations {
+              modelId
+              associations {
+                type
+                priority
+                disabled
+                when {
+                  enabled
+                  condition {
+                    type
+                    logic
+                    field
+                    operator
+                    value
+                    conditions {
+                      type
+                      logic
+                      field
+                      operator
+                      value
+                      conditions { type logic field operator value }
+                    }
+                  }
+                }
+                channelModel { channelId modelId }
+                channelRegex { channelId pattern }
+                regex { pattern exclude { channelNamePattern channelIds channelTags } }
+                modelId { modelId exclude { channelNamePattern channelIds channelTags } }
+                channelTagsModel { channelTags modelId }
+                channelTagsRegex { channelTags pattern }
+              }
+            }
+            storagePolicy {
+              dataStorageId
+              storeChunks
+              livePreview
+              storeRequestBody
+              storeResponseBody
+            }`;
+
 // Dynamic GraphQL query builders
 function buildApiKeysQuery(permissions: { canViewUsers: boolean }) {
   const userFields = permissions.canViewUsers
@@ -93,6 +134,7 @@ function buildApiKeyQuery(permissions: { canViewUsers: boolean }) {
             channelTagsMatchMode
             modelIDs
             loadBalanceStrategy
+${APIKEY_PROFILE_POLICY_FIELDS}
             quota {
               requests
               totalTokens
@@ -191,6 +233,7 @@ const UPDATE_APIKEY_PROFILES_MUTATION = `
           channelTagsMatchMode
           modelIDs
           loadBalanceStrategy
+${APIKEY_PROFILE_POLICY_FIELDS}
           quota {
             requests
             totalTokens
@@ -283,6 +326,7 @@ const APIKEY_PROFILE_TEMPLATES_QUERY = `
             channelTagsMatchMode
             modelIDs
             loadBalanceStrategy
+${APIKEY_PROFILE_POLICY_FIELDS}
             quota {
               requests
               totalTokens
@@ -357,6 +401,7 @@ const LOAD_APIKEY_PROFILE_TEMPLATE_MUTATION = `
           channelTagsMatchMode
           modelIDs
           loadBalanceStrategy
+${APIKEY_PROFILE_POLICY_FIELDS}
           quota {
             requests
             totalTokens

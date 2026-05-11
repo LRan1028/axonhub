@@ -18,6 +18,25 @@ export const formSchemaFactory = (t: (key: string) => string) =>
         channelTagsMatchMode: z.enum(['any', 'all', 'none']),
         modelIDs: z.array(z.string()).optional().nullable(),
         loadBalanceStrategy: z.string().optional().nullable(),
+        modelAssociations: z
+          .array(
+            z.object({
+              modelId: z.string(),
+              associations: z.array(z.any()),
+            })
+          )
+          .optional()
+          .nullable(),
+        storagePolicy: z
+          .object({
+            dataStorageId: z.number().optional().nullable(),
+            storeChunks: z.boolean().optional().nullable(),
+            livePreview: z.boolean().optional().nullable(),
+            storeRequestBody: z.boolean().optional().nullable(),
+            storeResponseBody: z.boolean().optional().nullable(),
+          })
+          .optional()
+          .nullable(),
         quota: z
           .object({
             requests: z.number().int().positive().optional().nullable(),

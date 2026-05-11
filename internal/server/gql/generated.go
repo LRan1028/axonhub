@@ -126,15 +126,22 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	APIKeyModelAssociationPolicy struct {
+		Associations func(childComplexity int) int
+		ModelID      func(childComplexity int) int
+	}
+
 	APIKeyProfile struct {
 		ChannelIDs           func(childComplexity int) int
 		ChannelTags          func(childComplexity int) int
 		ChannelTagsMatchMode func(childComplexity int) int
 		LoadBalanceStrategy  func(childComplexity int) int
+		ModelAssociations    func(childComplexity int) int
 		ModelIDs             func(childComplexity int) int
 		ModelMappings        func(childComplexity int) int
 		Name                 func(childComplexity int) int
 		Quota                func(childComplexity int) int
+		StoragePolicy        func(childComplexity int) int
 	}
 
 	APIKeyProfileQuotaUsage struct {
@@ -202,6 +209,14 @@ type ComplexityRoot struct {
 	APIKeyQuotaWindow struct {
 		End   func(childComplexity int) int
 		Start func(childComplexity int) int
+	}
+
+	APIKeyStoragePolicy struct {
+		DataStorageID     func(childComplexity int) int
+		LivePreview       func(childComplexity int) int
+		StoreChunks       func(childComplexity int) int
+		StoreRequestBody  func(childComplexity int) int
+		StoreResponseBody func(childComplexity int) int
 	}
 
 	APIKeyTokenUsageStats struct {
@@ -2419,6 +2434,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.APIKeyEdge.Node(childComplexity), true
 
+	case "APIKeyModelAssociationPolicy.associations":
+		if e.complexity.APIKeyModelAssociationPolicy.Associations == nil {
+			break
+		}
+
+		return e.complexity.APIKeyModelAssociationPolicy.Associations(childComplexity), true
+	case "APIKeyModelAssociationPolicy.modelId":
+		if e.complexity.APIKeyModelAssociationPolicy.ModelID == nil {
+			break
+		}
+
+		return e.complexity.APIKeyModelAssociationPolicy.ModelID(childComplexity), true
+
 	case "APIKeyProfile.channelIDs":
 		if e.complexity.APIKeyProfile.ChannelIDs == nil {
 			break
@@ -2443,6 +2471,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.APIKeyProfile.LoadBalanceStrategy(childComplexity), true
+	case "APIKeyProfile.modelAssociations":
+		if e.complexity.APIKeyProfile.ModelAssociations == nil {
+			break
+		}
+
+		return e.complexity.APIKeyProfile.ModelAssociations(childComplexity), true
 	case "APIKeyProfile.modelIDs":
 		if e.complexity.APIKeyProfile.ModelIDs == nil {
 			break
@@ -2467,6 +2501,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.APIKeyProfile.Quota(childComplexity), true
+	case "APIKeyProfile.storagePolicy":
+		if e.complexity.APIKeyProfile.StoragePolicy == nil {
+			break
+		}
+
+		return e.complexity.APIKeyProfile.StoragePolicy(childComplexity), true
 
 	case "APIKeyProfileQuotaUsage.profileName":
 		if e.complexity.APIKeyProfileQuotaUsage.ProfileName == nil {
@@ -2682,6 +2722,37 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.APIKeyQuotaWindow.Start(childComplexity), true
+
+	case "APIKeyStoragePolicy.dataStorageId":
+		if e.complexity.APIKeyStoragePolicy.DataStorageID == nil {
+			break
+		}
+
+		return e.complexity.APIKeyStoragePolicy.DataStorageID(childComplexity), true
+	case "APIKeyStoragePolicy.livePreview":
+		if e.complexity.APIKeyStoragePolicy.LivePreview == nil {
+			break
+		}
+
+		return e.complexity.APIKeyStoragePolicy.LivePreview(childComplexity), true
+	case "APIKeyStoragePolicy.storeChunks":
+		if e.complexity.APIKeyStoragePolicy.StoreChunks == nil {
+			break
+		}
+
+		return e.complexity.APIKeyStoragePolicy.StoreChunks(childComplexity), true
+	case "APIKeyStoragePolicy.storeRequestBody":
+		if e.complexity.APIKeyStoragePolicy.StoreRequestBody == nil {
+			break
+		}
+
+		return e.complexity.APIKeyStoragePolicy.StoreRequestBody(childComplexity), true
+	case "APIKeyStoragePolicy.storeResponseBody":
+		if e.complexity.APIKeyStoragePolicy.StoreResponseBody == nil {
+			break
+		}
+
+		return e.complexity.APIKeyStoragePolicy.StoreResponseBody(childComplexity), true
 
 	case "APIKeyTokenUsageStats.apiKeyId":
 		if e.complexity.APIKeyTokenUsageStats.APIKeyID == nil {
@@ -10339,6 +10410,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAPIKeyModelAssociationPolicyInput,
 		ec.unmarshalInputAPIKeyOrder,
 		ec.unmarshalInputAPIKeyProfileInput,
 		ec.unmarshalInputAPIKeyProfileTemplateOrder,
@@ -10347,6 +10419,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAPIKeyQuotaInput,
 		ec.unmarshalInputAPIKeyQuotaPastDurationInput,
 		ec.unmarshalInputAPIKeyQuotaPeriodInput,
+		ec.unmarshalInputAPIKeyStoragePolicyInput,
 		ec.unmarshalInputAPIKeyTokenUsageStatsInput,
 		ec.unmarshalInputAPIKeyWhereInput,
 		ec.unmarshalInputAddUserToProjectInput,
@@ -14540,6 +14613,86 @@ func (ec *executionContext) fieldContext_APIKeyEdge_cursor(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _APIKeyModelAssociationPolicy_modelId(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyModelAssociationPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyModelAssociationPolicy_modelId,
+		func(ctx context.Context) (any, error) {
+			return obj.ModelID, nil
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyModelAssociationPolicy_modelId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyModelAssociationPolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyModelAssociationPolicy_associations(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyModelAssociationPolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyModelAssociationPolicy_associations,
+		func(ctx context.Context) (any, error) {
+			return obj.Associations, nil
+		},
+		nil,
+		ec.marshalNModelAssociation2ᚕᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐModelAssociationᚄ,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyModelAssociationPolicy_associations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyModelAssociationPolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_ModelAssociation_type(ctx, field)
+			case "priority":
+				return ec.fieldContext_ModelAssociation_priority(ctx, field)
+			case "disabled":
+				return ec.fieldContext_ModelAssociation_disabled(ctx, field)
+			case "when":
+				return ec.fieldContext_ModelAssociation_when(ctx, field)
+			case "channelModel":
+				return ec.fieldContext_ModelAssociation_channelModel(ctx, field)
+			case "channelRegex":
+				return ec.fieldContext_ModelAssociation_channelRegex(ctx, field)
+			case "regex":
+				return ec.fieldContext_ModelAssociation_regex(ctx, field)
+			case "modelId":
+				return ec.fieldContext_ModelAssociation_modelId(ctx, field)
+			case "channelTagsModel":
+				return ec.fieldContext_ModelAssociation_channelTagsModel(ctx, field)
+			case "channelTagsRegex":
+				return ec.fieldContext_ModelAssociation_channelTagsRegex(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ModelAssociation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _APIKeyProfile_name(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyProfile) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -14783,6 +14936,82 @@ func (ec *executionContext) fieldContext_APIKeyProfile_loadBalanceStrategy(_ con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyProfile_modelAssociations(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyProfile_modelAssociations,
+		func(ctx context.Context) (any, error) {
+			return obj.ModelAssociations, nil
+		},
+		nil,
+		ec.marshalOAPIKeyModelAssociationPolicy2ᚕgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicyᚄ,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyProfile_modelAssociations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "modelId":
+				return ec.fieldContext_APIKeyModelAssociationPolicy_modelId(ctx, field)
+			case "associations":
+				return ec.fieldContext_APIKeyModelAssociationPolicy_associations(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type APIKeyModelAssociationPolicy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyProfile_storagePolicy(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyProfile) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyProfile_storagePolicy,
+		func(ctx context.Context) (any, error) {
+			return obj.StoragePolicy, nil
+		},
+		nil,
+		ec.marshalOAPIKeyStoragePolicy2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyStoragePolicy,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyProfile_storagePolicy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyProfile",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "dataStorageId":
+				return ec.fieldContext_APIKeyStoragePolicy_dataStorageId(ctx, field)
+			case "storeChunks":
+				return ec.fieldContext_APIKeyStoragePolicy_storeChunks(ctx, field)
+			case "livePreview":
+				return ec.fieldContext_APIKeyStoragePolicy_livePreview(ctx, field)
+			case "storeRequestBody":
+				return ec.fieldContext_APIKeyStoragePolicy_storeRequestBody(ctx, field)
+			case "storeResponseBody":
+				return ec.fieldContext_APIKeyStoragePolicy_storeResponseBody(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type APIKeyStoragePolicy", field.Name)
 		},
 	}
 	return fc, nil
@@ -15142,6 +15371,10 @@ func (ec *executionContext) fieldContext_APIKeyProfileTemplate_profile(_ context
 				return ec.fieldContext_APIKeyProfile_quota(ctx, field)
 			case "loadBalanceStrategy":
 				return ec.fieldContext_APIKeyProfile_loadBalanceStrategy(ctx, field)
+			case "modelAssociations":
+				return ec.fieldContext_APIKeyProfile_modelAssociations(ctx, field)
+			case "storagePolicy":
+				return ec.fieldContext_APIKeyProfile_storagePolicy(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type APIKeyProfile", field.Name)
 		},
@@ -15462,6 +15695,10 @@ func (ec *executionContext) fieldContext_APIKeyProfiles_profiles(_ context.Conte
 				return ec.fieldContext_APIKeyProfile_quota(ctx, field)
 			case "loadBalanceStrategy":
 				return ec.fieldContext_APIKeyProfile_loadBalanceStrategy(ctx, field)
+			case "modelAssociations":
+				return ec.fieldContext_APIKeyProfile_modelAssociations(ctx, field)
+			case "storagePolicy":
+				return ec.fieldContext_APIKeyProfile_storagePolicy(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type APIKeyProfile", field.Name)
 		},
@@ -15917,6 +16154,151 @@ func (ec *executionContext) fieldContext_APIKeyQuotaWindow_end(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyStoragePolicy_dataStorageId(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyStoragePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyStoragePolicy_dataStorageId,
+		func(ctx context.Context) (any, error) {
+			return obj.DataStorageID, nil
+		},
+		nil,
+		ec.marshalOInt2ᚖint,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyStoragePolicy_dataStorageId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyStoragePolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyStoragePolicy_storeChunks(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyStoragePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyStoragePolicy_storeChunks,
+		func(ctx context.Context) (any, error) {
+			return obj.StoreChunks, nil
+		},
+		nil,
+		ec.marshalOBoolean2ᚖbool,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyStoragePolicy_storeChunks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyStoragePolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyStoragePolicy_livePreview(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyStoragePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyStoragePolicy_livePreview,
+		func(ctx context.Context) (any, error) {
+			return obj.LivePreview, nil
+		},
+		nil,
+		ec.marshalOBoolean2ᚖbool,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyStoragePolicy_livePreview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyStoragePolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyStoragePolicy_storeRequestBody(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyStoragePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyStoragePolicy_storeRequestBody,
+		func(ctx context.Context) (any, error) {
+			return obj.StoreRequestBody, nil
+		},
+		nil,
+		ec.marshalOBoolean2ᚖbool,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyStoragePolicy_storeRequestBody(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyStoragePolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _APIKeyStoragePolicy_storeResponseBody(ctx context.Context, field graphql.CollectedField, obj *objects.APIKeyStoragePolicy) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_APIKeyStoragePolicy_storeResponseBody,
+		func(ctx context.Context) (any, error) {
+			return obj.StoreResponseBody, nil
+		},
+		nil,
+		ec.marshalOBoolean2ᚖbool,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_APIKeyStoragePolicy_storeResponseBody(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "APIKeyStoragePolicy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -57018,6 +57400,40 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAPIKeyModelAssociationPolicyInput(ctx context.Context, obj any) (objects.APIKeyModelAssociationPolicy, error) {
+	var it objects.APIKeyModelAssociationPolicy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"modelId", "associations"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "modelId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ModelID = data
+		case "associations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("associations"))
+			data, err := ec.unmarshalNModelAssociationInput2ᚕᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐModelAssociationᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Associations = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAPIKeyOrder(ctx context.Context, obj any) (ent.APIKeyOrder, error) {
 	var it ent.APIKeyOrder
 	asMap := map[string]any{}
@@ -57063,7 +57479,7 @@ func (ec *executionContext) unmarshalInputAPIKeyProfileInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "modelMappings", "channelIDs", "channelTags", "channelTagsMatchMode", "modelIDs", "quota", "loadBalanceStrategy"}
+	fieldsInOrder := [...]string{"name", "modelMappings", "channelIDs", "channelTags", "channelTagsMatchMode", "modelIDs", "quota", "loadBalanceStrategy", "modelAssociations", "storagePolicy"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -57126,6 +57542,20 @@ func (ec *executionContext) unmarshalInputAPIKeyProfileInput(ctx context.Context
 				return it, err
 			}
 			it.LoadBalanceStrategy = data
+		case "modelAssociations":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("modelAssociations"))
+			data, err := ec.unmarshalOAPIKeyModelAssociationPolicyInput2ᚕgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicyᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ModelAssociations = data
+		case "storagePolicy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storagePolicy"))
+			data, err := ec.unmarshalOAPIKeyStoragePolicyInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyStoragePolicy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoragePolicy = data
 		}
 	}
 
@@ -57795,6 +58225,61 @@ func (ec *executionContext) unmarshalInputAPIKeyQuotaPeriodInput(ctx context.Con
 				return it, err
 			}
 			it.CalendarDuration = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputAPIKeyStoragePolicyInput(ctx context.Context, obj any) (objects.APIKeyStoragePolicy, error) {
+	var it objects.APIKeyStoragePolicy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"dataStorageId", "storeChunks", "livePreview", "storeRequestBody", "storeResponseBody"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "dataStorageId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataStorageId"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataStorageID = data
+		case "storeChunks":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeChunks"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoreChunks = data
+		case "livePreview":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("livePreview"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LivePreview = data
+		case "storeRequestBody":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeRequestBody"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoreRequestBody = data
+		case "storeResponseBody":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeResponseBody"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoreResponseBody = data
 		}
 	}
 
@@ -82655,6 +83140,50 @@ func (ec *executionContext) _APIKeyEdge(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var aPIKeyModelAssociationPolicyImplementors = []string{"APIKeyModelAssociationPolicy"}
+
+func (ec *executionContext) _APIKeyModelAssociationPolicy(ctx context.Context, sel ast.SelectionSet, obj *objects.APIKeyModelAssociationPolicy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aPIKeyModelAssociationPolicyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("APIKeyModelAssociationPolicy")
+		case "modelId":
+			out.Values[i] = ec._APIKeyModelAssociationPolicy_modelId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "associations":
+			out.Values[i] = ec._APIKeyModelAssociationPolicy_associations(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var aPIKeyProfileImplementors = []string{"APIKeyProfile"}
 
 func (ec *executionContext) _APIKeyProfile(ctx context.Context, sel ast.SelectionSet, obj *objects.APIKeyProfile) graphql.Marshaler {
@@ -82685,6 +83214,10 @@ func (ec *executionContext) _APIKeyProfile(ctx context.Context, sel ast.Selectio
 			out.Values[i] = ec._APIKeyProfile_quota(ctx, field, obj)
 		case "loadBalanceStrategy":
 			out.Values[i] = ec._APIKeyProfile_loadBalanceStrategy(ctx, field, obj)
+		case "modelAssociations":
+			out.Values[i] = ec._APIKeyProfile_modelAssociations(ctx, field, obj)
+		case "storagePolicy":
+			out.Values[i] = ec._APIKeyProfile_storagePolicy(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -83289,6 +83822,50 @@ func (ec *executionContext) _APIKeyQuotaWindow(ctx context.Context, sel ast.Sele
 			out.Values[i] = ec._APIKeyQuotaWindow_start(ctx, field, obj)
 		case "end":
 			out.Values[i] = ec._APIKeyQuotaWindow_end(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var aPIKeyStoragePolicyImplementors = []string{"APIKeyStoragePolicy"}
+
+func (ec *executionContext) _APIKeyStoragePolicy(ctx context.Context, sel ast.SelectionSet, obj *objects.APIKeyStoragePolicy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aPIKeyStoragePolicyImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("APIKeyStoragePolicy")
+		case "dataStorageId":
+			out.Values[i] = ec._APIKeyStoragePolicy_dataStorageId(ctx, field, obj)
+		case "storeChunks":
+			out.Values[i] = ec._APIKeyStoragePolicy_storeChunks(ctx, field, obj)
+		case "livePreview":
+			out.Values[i] = ec._APIKeyStoragePolicy_livePreview(ctx, field, obj)
+		case "storeRequestBody":
+			out.Values[i] = ec._APIKeyStoragePolicy_storeRequestBody(ctx, field, obj)
+		case "storeResponseBody":
+			out.Values[i] = ec._APIKeyStoragePolicy_storeResponseBody(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -100830,6 +101407,15 @@ func (ec *executionContext) marshalNAPIKeyConnection2ᚖgithubᚗcomᚋloopljᚋ
 	return ec._APIKeyConnection(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAPIKeyModelAssociationPolicy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicy(ctx context.Context, sel ast.SelectionSet, v objects.APIKeyModelAssociationPolicy) graphql.Marshaler {
+	return ec._APIKeyModelAssociationPolicy(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNAPIKeyModelAssociationPolicyInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicy(ctx context.Context, v any) (objects.APIKeyModelAssociationPolicy, error) {
+	res, err := ec.unmarshalInputAPIKeyModelAssociationPolicyInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNAPIKeyOrderField2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋentᚐAPIKeyOrderField(ctx context.Context, v any) (*ent.APIKeyOrderField, error) {
 	var res = new(ent.APIKeyOrderField)
 	err := res.UnmarshalGQL(v)
@@ -106824,6 +107410,71 @@ func (ec *executionContext) marshalOAPIKeyEdge2ᚖgithubᚗcomᚋloopljᚋaxonhu
 	return ec._APIKeyEdge(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOAPIKeyModelAssociationPolicy2ᚕgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicyᚄ(ctx context.Context, sel ast.SelectionSet, v []objects.APIKeyModelAssociationPolicy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAPIKeyModelAssociationPolicy2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicy(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOAPIKeyModelAssociationPolicyInput2ᚕgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicyᚄ(ctx context.Context, v any) ([]objects.APIKeyModelAssociationPolicy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]objects.APIKeyModelAssociationPolicy, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAPIKeyModelAssociationPolicyInput2githubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyModelAssociationPolicy(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
 func (ec *executionContext) unmarshalOAPIKeyOrder2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋentᚐAPIKeyOrder(ctx context.Context, v any) (*ent.APIKeyOrder, error) {
 	if v == nil {
 		return nil, nil
@@ -107132,6 +107783,21 @@ func (ec *executionContext) marshalOAPIKeyStatus2ᚖgithubᚗcomᚋloopljᚋaxon
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalOAPIKeyStoragePolicy2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyStoragePolicy(ctx context.Context, sel ast.SelectionSet, v *objects.APIKeyStoragePolicy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._APIKeyStoragePolicy(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOAPIKeyStoragePolicyInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋobjectsᚐAPIKeyStoragePolicy(ctx context.Context, v any) (*objects.APIKeyStoragePolicy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAPIKeyStoragePolicyInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOAPIKeyTokenUsageStatsInput2ᚖgithubᚗcomᚋloopljᚋaxonhubᚋinternalᚋserverᚋgqlᚐAPIKeyTokenUsageStatsInput(ctx context.Context, v any) (*APIKeyTokenUsageStatsInput, error) {

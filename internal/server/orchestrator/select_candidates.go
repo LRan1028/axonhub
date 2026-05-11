@@ -6,8 +6,11 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/looplj/axonhub/internal/ent"
+	"github.com/looplj/axonhub/internal/ent/model"
 	"github.com/looplj/axonhub/internal/ent/providerquotastatus"
 	"github.com/looplj/axonhub/internal/log"
+	"github.com/looplj/axonhub/internal/objects"
 	"github.com/looplj/axonhub/internal/server/biz"
 	"github.com/looplj/axonhub/internal/server/biz/provider_quota"
 	"github.com/looplj/axonhub/llm"
@@ -25,6 +28,22 @@ func selectCandidates(inbound *PersistentInboundTransformer, quotaProvider Provi
 		}
 
 		selector := inbound.state.CandidateSelector
+		profile := (*objects.APIKeyProfile)(nil)
+
+		if inbound.state.APIKey != nil {
+			profile = inbound.state.APIKey.GetActiveProfile()
+			if policy := profile.ModelAssociationPolicy(llmRequest.Model); policy != nil {
+				if err := ensureAPIKeyAssociationModelEnabled(ctx, inbound.state.ModelService, llmRequest.Model); err != nil {
+					return nil, err
+				}
+
+				selector = NewAPIKeyModelAssociationSelector(
+					selector,
+					inbound.state.ChannelService,
+					policy.Associations,
+				)
+			}
+		}
 
 		// Project-level profile filtering (upper boundary)
 		if inbound.state.APIKey != nil {
@@ -42,7 +61,7 @@ func selectCandidates(inbound *PersistentInboundTransformer, quotaProvider Provi
 		}
 
 		// Key-level profile filtering (narrows further within project scope)
-		if profile := inbound.state.APIKey.GetActiveProfile(); profile != nil {
+		if profile != nil {
 			if len(profile.ChannelIDs) > 0 {
 				selector = WithSelectedChannelsSelector(selector, profile.ChannelIDs)
 			}
@@ -120,6 +139,22 @@ func selectCandidates(inbound *PersistentInboundTransformer, quotaProvider Provi
 
 		return llmRequest, nil
 	})
+}
+
+func ensureAPIKeyAssociationModelEnabled(ctx context.Context, modelService *biz.ModelService, modelID string) error {
+	if modelService == nil {
+		return nil
+	}
+
+	if _, err := modelService.GetModelByModelID(ctx, modelID, model.StatusEnabled); err != nil {
+		if ent.IsNotFound(err) {
+			return fmt.Errorf("%w: %q", biz.ErrInvalidModel, modelID)
+		}
+
+		return fmt.Errorf("failed to query AxonHub Model: %w", err)
+	}
+
+	return nil
 }
 
 func areAllChannelsExhausted(candidates []*ChannelModelsCandidate, quotaProvider ProviderQuotaStatusProvider, llmRequest *llm.Request) bool {

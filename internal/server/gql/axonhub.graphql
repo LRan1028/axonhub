@@ -316,6 +316,21 @@ input APIKeyProfileInput {
   modelIDs: [String!]
   quota: APIKeyQuotaInput
   loadBalanceStrategy: String
+  modelAssociations: [APIKeyModelAssociationPolicyInput!]
+  storagePolicy: APIKeyStoragePolicyInput
+}
+
+input APIKeyModelAssociationPolicyInput {
+  modelId: String!
+  associations: [ModelAssociationInput!]!
+}
+
+input APIKeyStoragePolicyInput {
+  dataStorageId: Int
+  storeChunks: Boolean
+  livePreview: Boolean
+  storeRequestBody: Boolean
+  storeResponseBody: Boolean
 }
 
 input UpdateProjectProfilesInput {
@@ -360,6 +375,21 @@ type APIKeyProfile {
   modelIDs: [String!]
   quota: APIKeyQuota
   loadBalanceStrategy: String
+  modelAssociations: [APIKeyModelAssociationPolicy!]
+  storagePolicy: APIKeyStoragePolicy
+}
+
+type APIKeyModelAssociationPolicy {
+  modelId: String!
+  associations: [ModelAssociation!]!
+}
+
+type APIKeyStoragePolicy {
+  dataStorageId: Int
+  storeChunks: Boolean
+  livePreview: Boolean
+  storeRequestBody: Boolean
+  storeResponseBody: Boolean
 }
 
 enum ChannelTagsMatchMode {

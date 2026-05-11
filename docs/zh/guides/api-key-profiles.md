@@ -52,6 +52,176 @@ API Key Profile 的模型映射是三层流水线中的**第一步**。完整说
 }
 ```
 
+## 按 API Key 覆盖模型渠道策略
+
+默认情况下，请求会使用全局模型管理里的“模型关联”来选择渠道。你也可以在某个 API Key Profile 里为指定模型配置独立的模型渠道策略。
+
+这适合这些场景：
+
+- 同一个模型，对不同客户或不同工具走不同供应商
+- 给某个 API Key 单独指定低价渠道、备用渠道或专属渠道
+- 保持全局模型策略不变，只对少数 Key 做例外
+
+配置位置：
+
+1. 进入 **API Keys**
+2. 打开某个 API Key 的 **Profiles**
+3. 展开要配置的 Profile
+4. 在 **模型渠道策略** 中填写 JSON
+
+### 基本格式
+
+```json
+[
+  {
+    "modelId": "gpt-4o",
+    "associations": [
+      {
+        "type": "channel_model",
+        "priority": 0,
+        "channelModel": {
+          "channelId": 12,
+          "modelId": "gpt-4o"
+        }
+      }
+    ]
+  }
+]
+```
+
+含义：
+
+- `modelId`：要覆盖的 AxonHub 模型 ID
+- `associations`：这个模型在当前 API Key Profile 下使用的模型关联规则
+- `priority`：优先级，数值越小越优先
+- `channelId`：渠道 ID
+- `channelModel.modelId`：发给该渠道时使用的渠道模型名
+
+如果 **模型渠道策略** 为空数组 `[]` 或未配置，该 API Key 会继续使用全局模型关联。
+
+### 多个备用渠道
+
+```json
+[
+  {
+    "modelId": "gpt-4o",
+    "associations": [
+      {
+        "type": "channel_model",
+        "priority": 0,
+        "channelModel": {
+          "channelId": 12,
+          "modelId": "gpt-4o"
+        }
+      },
+      {
+        "type": "channel_model",
+        "priority": 10,
+        "channelModel": {
+          "channelId": 18,
+          "modelId": "gpt-4o"
+        }
+      }
+    ]
+  }
+]
+```
+
+上面的配置会优先使用渠道 `12`，失败或重试切换时再考虑渠道 `18`。
+
+### 按渠道标签选择
+
+如果不想硬编码渠道 ID，可以使用渠道标签：
+
+```json
+[
+  {
+    "modelId": "gpt-4o-mini",
+    "associations": [
+      {
+        "type": "channel_tags_model",
+        "priority": 0,
+        "channelTagsModel": {
+          "channelTags": ["cheap"],
+          "modelId": "gpt-4o-mini"
+        }
+      }
+    ]
+  }
+]
+```
+
+这会从带有 `cheap` 标签的渠道中选择支持 `gpt-4o-mini` 的渠道。
+
+### 正则匹配渠道模型
+
+```json
+[
+  {
+    "modelId": "gpt-4o",
+    "associations": [
+      {
+        "type": "regex",
+        "priority": 0,
+        "regex": {
+          "pattern": "gpt-4o.*",
+          "exclude": []
+        }
+      }
+    ]
+  }
+]
+```
+
+这会匹配所有渠道里符合 `gpt-4o.*` 的模型。
+
+### 注意事项
+
+- `modelId` 写的是 **API Key Profile 模型映射之后** 的模型名。
+  例如 Profile 先把 `gpt-4` 映射成 `gpt-4o`，这里就要写 `gpt-4o`。
+- `modelId` 对应的全局模型必须处于启用状态。禁用模型不会因为 API Key 覆盖策略而重新可用。
+- 一旦某个 `modelId` 配置了 key 级策略，该模型就不会再使用全局模型关联。
+- 如果 key 级策略没有匹配到任何渠道，请求会失败，不会自动回退到全局策略。
+- 仍然会继续受 Project Profile 和 API Key Profile 的渠道 ID、渠道标签限制影响。
+
+## 按 API Key 覆盖存储策略
+
+默认情况下，请求体、响应体、流式块和实时预览是否保存，由系统全局存储策略决定。你可以在 API Key Profile 中打开 **存储策略**，让某个 Key 使用独立配置。
+
+常见场景：
+
+- 对外部客户禁用请求体或响应体保存，减少敏感数据留存
+- 对内部调试 Key 开启流式块保存和实时预览
+- 给某个 Key 指定独立的数据存储后端
+
+### 配置字段
+
+```json
+{
+  "storagePolicy": {
+    "dataStorageId": 3,
+    "storeRequestBody": false,
+    "storeResponseBody": true,
+    "storeChunks": false,
+    "livePreview": false
+  }
+}
+```
+
+字段含义：
+
+| 字段 | 说明 |
+|------|------|
+| `dataStorageId` | 指定请求和响应正文使用的数据存储 ID |
+| `storeRequestBody` | 是否保存客户端请求体 |
+| `storeResponseBody` | 是否保存上游响应体 |
+| `storeChunks` | 是否保存流式响应块 |
+| `livePreview` | 是否启用实时预览 |
+
+每个字段都可以不设置。不设置表示继承全局存储策略。
+
+如果在界面中选择 **继承全局**，保存时对应字段会保持为空。只有明确选择启用或禁用时，才会覆盖全局设置。
+
 ## 配置步骤
 
 ### 步骤 1：进入配置界面

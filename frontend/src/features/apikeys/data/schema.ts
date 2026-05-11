@@ -21,6 +21,29 @@ const channelTagsMatchModeFieldSchema = z.preprocess((value) => {
   return value;
 }, channelTagsMatchModeSchema);
 
+// Model Mapping schema
+export const modelMappingSchema = z.object({
+  from: z.string(),
+  to: z.string(),
+});
+export type ModelMapping = z.infer<typeof modelMappingSchema>;
+
+export const apiKeyModelAssociationPolicySchema = z.object({
+  modelId: z.string(),
+  associations: z.array(z.any()),
+});
+
+export const apiKeyStoragePolicySchema = z
+  .object({
+    dataStorageId: z.number().optional().nullable(),
+    storeChunks: z.boolean().optional().nullable(),
+    livePreview: z.boolean().optional().nullable(),
+    storeRequestBody: z.boolean().optional().nullable(),
+    storeResponseBody: z.boolean().optional().nullable(),
+  })
+  .optional()
+  .nullable();
+
 // API Key schema based on GraphQL schema
 export const apiKeySchema = z.object({
   id: z.string(),
@@ -40,17 +63,14 @@ export const apiKeySchema = z.object({
         .array(
           z.object({
             name: z.string(),
-            modelMappings: z.array(
-              z.object({
-                from: z.string(),
-                to: z.string(),
-              })
-            ),
+            modelMappings: z.array(modelMappingSchema),
             channelIDs: z.array(z.number()).optional().nullable(),
             channelTags: z.array(z.string()).optional().nullable(),
             channelTagsMatchMode: channelTagsMatchModeFieldSchema,
             modelIDs: z.array(z.string()).optional().nullable(),
             loadBalanceStrategy: z.string().optional().nullable(),
+            modelAssociations: z.array(apiKeyModelAssociationPolicySchema).optional().nullable(),
+            storagePolicy: apiKeyStoragePolicySchema,
             quota: z
               .object({
                 requests: z.number().optional().nullable(),
@@ -129,13 +149,6 @@ export const updateApiKeyInputSchema = z.object({
 });
 export type UpdateApiKeyInput = z.infer<typeof updateApiKeyInputSchema>;
 
-// Model Mapping schema
-export const modelMappingSchema = z.object({
-  from: z.string(),
-  to: z.string(),
-});
-export type ModelMapping = z.infer<typeof modelMappingSchema>;
-
 // API Key Profile schema
 export const apiKeyProfileSchema = z.object({
   name: z.string(),
@@ -145,6 +158,8 @@ export const apiKeyProfileSchema = z.object({
   channelTagsMatchMode: channelTagsMatchModeFieldSchema,
   modelIDs: z.array(z.string()).optional().nullable(),
   loadBalanceStrategy: z.string().optional().nullable(),
+  modelAssociations: z.array(apiKeyModelAssociationPolicySchema).optional().nullable(),
+  storagePolicy: apiKeyStoragePolicySchema,
   quota: z
     .object({
       requests: z.number().optional().nullable(),
@@ -228,6 +243,8 @@ export const updateApiKeyProfilesInputSchemaFactory = (t: (key: string) => strin
             channelTagsMatchMode: channelTagsMatchModeFieldSchema,
             modelIDs: z.array(z.string()).optional().nullable(),
             loadBalanceStrategy: z.string().optional().nullable(),
+            modelAssociations: z.array(apiKeyModelAssociationPolicySchema).optional().nullable(),
+            storagePolicy: apiKeyStoragePolicySchema,
             quota: z
               .object({
                 requests: z.number().int().positive().optional().nullable(),
@@ -328,6 +345,8 @@ export const updateApiKeyProfilesInputSchema = z.object({
       channelTagsMatchMode: channelTagsMatchModeFieldSchema,
       modelIDs: z.array(z.string()).optional().nullable(),
       loadBalanceStrategy: z.string().optional().nullable(),
+      modelAssociations: z.array(apiKeyModelAssociationPolicySchema).optional().nullable(),
+      storagePolicy: apiKeyStoragePolicySchema,
       quota: z
         .object({
           requests: z.number().int().positive().optional().nullable(),

@@ -64,6 +64,27 @@ func (s *RequestService) shouldUseExternalStorage(_ context.Context, ds *ent.Dat
 	return !ds.Primary
 }
 
+func (s *RequestService) effectiveStoragePolicy(ctx context.Context) *StoragePolicy {
+	return EffectiveStoragePolicy(ctx, s.SystemService)
+}
+
+func (s *RequestService) effectiveDataStorage(ctx context.Context) (*ent.DataStorage, error) {
+	override := activeAPIKeyStoragePolicy(ctx)
+	if override != nil && override.DataStorageID != nil && *override.DataStorageID > 0 {
+		ds, err := s.DataStorageService.GetDataStorageByID(ctx, *override.DataStorageID)
+		if err == nil {
+			return ds, nil
+		}
+
+		log.Warn(ctx, "Failed to get API key profile data storage, falling back to default",
+			log.Int("data_storage_id", *override.DataStorageID),
+			log.Cause(err),
+		)
+	}
+
+	return s.DataStorageService.GetDefaultDataStorage(ctx)
+}
+
 // _InvalidRequestBodyJSON returns a JSON object indicating invalid text.
 var _InvalidRequestBodyJSON = objects.JSONRawMessage(`{"message":"invalid text"}`)
 
@@ -125,12 +146,7 @@ func (s *RequestService) CreateRequest(
 	projectID, _ := contexts.GetProjectID(ctx)
 
 	// Decide whether to store the original request body
-	storeRequestBody := true
-	if policy, err := s.SystemService.StoragePolicy(ctx); err == nil {
-		storeRequestBody = policy.StoreRequestBody
-	} else {
-		log.Warn(ctx, "Failed to get storage policy, defaulting to store request body", log.Cause(err))
-	}
+	storeRequestBody := s.effectiveStoragePolicy(ctx).StoreRequestBody
 
 	var (
 		requestBodyBytes    objects.JSONRawMessage = []byte("{}")
@@ -161,7 +177,7 @@ func (s *RequestService) CreateRequest(
 	}
 
 	// Get default data storage
-	dataStorage, err := s.DataStorageService.GetDefaultDataStorage(ctx)
+	dataStorage, err := s.effectiveDataStorage(ctx)
 	if err != nil {
 		log.Warn(ctx, "Failed to get default data storage, request will be created without data storage", log.Cause(err))
 	}
@@ -249,12 +265,7 @@ func (s *RequestService) CreateRequestExecution(
 	format llm.APIFormat,
 ) (*ent.RequestExecution, error) {
 	// Decide whether to store the channel request body
-	storeRequestBody := true
-	if policy, err := s.SystemService.StoragePolicy(ctx); err == nil {
-		storeRequestBody = policy.StoreRequestBody
-	} else {
-		log.Warn(ctx, "Failed to get storage policy, defaulting to store request body", log.Cause(err))
-	}
+	storeRequestBody := s.effectiveStoragePolicy(ctx).StoreRequestBody
 
 	var (
 		requestBodyBytes    objects.JSONRawMessage = []byte("{}")
@@ -368,12 +379,7 @@ func (s *RequestService) UpdateRequestCompleted(
 	metrics *LatencyMetrics,
 ) error {
 	// Decide whether to store the final response body
-	storeResponseBody := true
-	if policy, err := s.SystemService.StoragePolicy(ctx); err == nil {
-		storeResponseBody = policy.StoreResponseBody
-	} else {
-		log.Warn(ctx, "Failed to get storage policy, defaulting to store response body", log.Cause(err))
-	}
+	storeResponseBody := s.effectiveStoragePolicy(ctx).StoreResponseBody
 
 	client := s.entFromContext(ctx)
 
@@ -455,12 +461,7 @@ func (s *RequestService) UpdateRequestStatusExternalIDAndResponseBody(
 	metrics *LatencyMetrics,
 ) error {
 	// Decide whether to store the final response body
-	storeResponseBody := true
-	if policy, err := s.SystemService.StoragePolicy(ctx); err == nil {
-		storeResponseBody = policy.StoreResponseBody
-	} else {
-		log.Warn(ctx, "Failed to get storage policy, defaulting to store response body", log.Cause(err))
-	}
+	storeResponseBody := s.effectiveStoragePolicy(ctx).StoreResponseBody
 
 	client := s.entFromContext(ctx)
 
@@ -540,12 +541,7 @@ func (s *RequestService) UpdateRequestExecutionCompleted(
 	metrics *LatencyMetrics,
 ) error {
 	// Decide whether to store the final response body for execution
-	storeResponseBody := true
-	if policy, err := s.SystemService.StoragePolicy(ctx); err == nil {
-		storeResponseBody = policy.StoreResponseBody
-	} else {
-		log.Warn(ctx, "Failed to get storage policy, defaulting to store response body", log.Cause(err))
-	}
+	storeResponseBody := s.effectiveStoragePolicy(ctx).StoreResponseBody
 
 	client := s.entFromContext(ctx)
 
@@ -694,13 +690,7 @@ func (s *RequestService) SaveRequestExecutionChunks(
 		return nil
 	}
 
-	// Check if chunk storage is enabled
-	storeChunks, err := s.SystemService.StoreChunks(ctx)
-	if err != nil {
-		log.Warn(ctx, "Failed to get StoreChunks setting, defaulting to false", log.Cause(err))
-
-		storeChunks = false
-	}
+	storeChunks := s.effectiveStoragePolicy(ctx).StoreChunks
 
 	// Only store chunks if enabled
 	if !storeChunks {
@@ -787,12 +777,7 @@ func (s *RequestService) SaveRequestChunks(
 		return nil
 	}
 
-	storeChunks, err := s.SystemService.StoreChunks(ctx)
-	if err != nil {
-		log.Warn(ctx, "Failed to get StoreChunks setting, defaulting to false", log.Cause(err))
-
-		storeChunks = false
-	}
+	storeChunks := s.effectiveStoragePolicy(ctx).StoreChunks
 
 	// Only store chunks if enabled
 	if !storeChunks {

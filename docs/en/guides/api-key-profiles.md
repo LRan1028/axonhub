@@ -52,6 +52,176 @@ Many AI tools use fixed model names internally. If you want them to use other mo
 }
 ```
 
+## Override Model Channel Policies Per API Key
+
+By default, requests use the global model associations configured in model management. You can also define independent model channel policies in an API Key Profile for specific models.
+
+Use this when you want to:
+
+- Route the same model to different providers for different customers or tools
+- Give one API Key cheaper channels, fallback channels, or dedicated channels
+- Keep the global model policy unchanged and only add exceptions for a few keys
+
+Where to configure it:
+
+1. Go to **API Keys**
+2. Open **Profiles** for an API Key
+3. Expand the profile you want to edit
+4. Enter JSON in **Model Channel Policies**
+
+### Basic Format
+
+```json
+[
+  {
+    "modelId": "gpt-4o",
+    "associations": [
+      {
+        "type": "channel_model",
+        "priority": 0,
+        "channelModel": {
+          "channelId": 12,
+          "modelId": "gpt-4o"
+        }
+      }
+    ]
+  }
+]
+```
+
+Meaning:
+
+- `modelId`: the AxonHub model ID to override
+- `associations`: the model association rules used by this API Key Profile
+- `priority`: lower numbers have higher priority
+- `channelId`: the channel ID
+- `channelModel.modelId`: the model name sent to that channel
+
+If **Model Channel Policies** is an empty array `[]` or is not configured, the API Key continues to use global model associations.
+
+### Multiple Fallback Channels
+
+```json
+[
+  {
+    "modelId": "gpt-4o",
+    "associations": [
+      {
+        "type": "channel_model",
+        "priority": 0,
+        "channelModel": {
+          "channelId": 12,
+          "modelId": "gpt-4o"
+        }
+      },
+      {
+        "type": "channel_model",
+        "priority": 10,
+        "channelModel": {
+          "channelId": 18,
+          "modelId": "gpt-4o"
+        }
+      }
+    ]
+  }
+]
+```
+
+This prefers channel `12` and considers channel `18` during retry or failover.
+
+### Select by Channel Tags
+
+To avoid hardcoding channel IDs, use channel tags:
+
+```json
+[
+  {
+    "modelId": "gpt-4o-mini",
+    "associations": [
+      {
+        "type": "channel_tags_model",
+        "priority": 0,
+        "channelTagsModel": {
+          "channelTags": ["cheap"],
+          "modelId": "gpt-4o-mini"
+        }
+      }
+    ]
+  }
+]
+```
+
+This selects channels tagged with `cheap` that support `gpt-4o-mini`.
+
+### Regex Match Channel Models
+
+```json
+[
+  {
+    "modelId": "gpt-4o",
+    "associations": [
+      {
+        "type": "regex",
+        "priority": 0,
+        "regex": {
+          "pattern": "gpt-4o.*",
+          "exclude": []
+        }
+      }
+    ]
+  }
+]
+```
+
+This matches models named `gpt-4o.*` across all channels.
+
+### Important Notes
+
+- `modelId` is the model name **after API Key Profile model mapping**.
+  For example, if the profile maps `gpt-4` to `gpt-4o`, use `gpt-4o` here.
+- The global model for `modelId` must be enabled. A disabled model cannot be revived by an API Key override.
+- Once a key-level policy is configured for a `modelId`, that model no longer uses the global model association.
+- If the key-level policy matches no channels, the request fails instead of falling back to the global policy.
+- Project Profile and API Key Profile channel ID/tag restrictions still apply.
+
+## Override Storage Policy Per API Key
+
+By default, whether AxonHub stores request bodies, response bodies, stream chunks, and live previews is controlled by the global storage policy. You can enable **Storage Policy** in an API Key Profile to override those settings for one key.
+
+Common use cases:
+
+- Disable request or response body storage for external customers
+- Enable stream chunk storage and live preview for internal debugging keys
+- Send one API Key's payloads to a dedicated data storage backend
+
+### Fields
+
+```json
+{
+  "storagePolicy": {
+    "dataStorageId": 3,
+    "storeRequestBody": false,
+    "storeResponseBody": true,
+    "storeChunks": false,
+    "livePreview": false
+  }
+}
+```
+
+Field meanings:
+
+| Field | Description |
+|-------|-------------|
+| `dataStorageId` | Data Storage ID used for request and response bodies |
+| `storeRequestBody` | Whether to store the client request body |
+| `storeResponseBody` | Whether to store the upstream response body |
+| `storeChunks` | Whether to store streaming response chunks |
+| `livePreview` | Whether to enable live preview |
+
+Every field is optional. Unset fields inherit the global storage policy.
+
+In the UI, selecting **Inherit global** leaves that field unset. Only explicit enabled or disabled values override the global setting.
+
 ## Configuration Steps
 
 ### Step 1: Open the profile UI
